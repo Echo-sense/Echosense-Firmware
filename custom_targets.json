@@ -1,0 +1,23 @@
+{   
+    "OSHCHIP-XTAL": {
+        "inherits": ["OSHCHIP"],
+        "overrides": { "lf_clock_src": "NRF_LF_SRC_XTAL" },
+        "device_has": [
+            "USTICKER",
+            "LPTICKER",
+            "ANALOGIN",
+            "I2C",
+            "I2C_ASYNCH",
+            "INTERRUPTIN",
+            "PORTIN",
+            "PORTINOUT",
+            "PORTOUT",
+            "PWMOUT",
+            "SERIAL",
+            "SLEEP",
+            "SPI",
+            "SPISLAVE"
+        ],
+        "device_name": "nRF51822_xxAC"
+    }
+}

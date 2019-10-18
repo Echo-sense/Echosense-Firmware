@@ -1,9 +1,11 @@
 .build
 BUILD
 CMakeLists.txt
+cmake-build-debug
 GettingStarted.html
 mbed_config.h
 .mbed
+.idea
 projectfiles
 *.py*
  

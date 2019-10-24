@@ -15,3 +15,25 @@
  */
 
 #include "mbed.h"
+#include "pins.h"
+#include <LIDARLite_v3HP.h>
+
+#define SAMPLE_RATE 10
+
+//IO
+I2C i2c(I2C_SDA, I2C_SCL);
+DigitalOut powerLed(POWER_LED);
+
+//Peripherals
+LIDARLite_v3HP lidar(i2c*);
+
+Ticker ticker;
+
+void tick() {
+    // do LIDAR sensing
+}
+
+int main() {
+    ticker.attach(&tick, SAMPLE_RATE);
+}
+

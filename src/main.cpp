@@ -25,7 +25,7 @@ I2C i2c(I2C_SDA, I2C_SCL);
 DigitalOut powerLed(POWER_LED);
 
 //Peripherals
-LIDARLite_v3HP lidar(i2c*);
+LIDARLite_v3HP lidar(&i2c);
 
 Ticker ticker;
 

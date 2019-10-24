@@ -6,6 +6,7 @@ GettingStarted.html
 mbed_config.h
 .mbed
 .idea
+.temp
 projectfiles
 *.py*
  

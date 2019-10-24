@@ -7,7 +7,7 @@ Setup is done the same as any mbed program
 
 1. Install the [Mbed CLI](https://os.mbed.com/docs/mbed-os/v5.14/quick-start/offline-with-mbed-cli.html).
 2. Clone this repository and CD into it.
-3. Run `mbed sync` to download the dependencies.
+3. Run `mbed update` to download the dependencies.
 4. Run `mbed target OSHCHIP-XTAL` to set the target board to OSHchip with a 32 kibihertz low frequency clock attached.
 5. (Optional) Run `mbed export -i cmake_gcc_arm` to create cmake files for the project for development and compilation in an IDE.
 

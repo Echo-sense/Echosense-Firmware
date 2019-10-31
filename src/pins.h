@@ -22,6 +22,7 @@
 #define I2C_SCL p1
 
 // Power LED
-#define POWER_LED LED1
+#define POWER_LED1 LED1
+#define POWER_LED2 LED2
 
 #endif //ECHOSENSE_FIRMWARE_PINS_H

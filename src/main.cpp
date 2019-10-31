@@ -18,12 +18,14 @@
 #include "pins.h"
 #include <LIDARLite_v3HP.h>
 
-#define SAMPLE_RATE 1000
+#define SAMPLE_RATE 10000
 
 //IO
-I2C i2c(I2C_SDA, I2C_SCL);
-DigitalOut powerLed1(POWER_LED1);
-DigitalOut powerLed2(POWER_LED2);
+I2C i2c(I2C_SDA0, I2C_SCL0);
+DigitalOut led1(p8);
+DigitalOut led2(p5);
+DigitalOut led3(p3);
+
 
 //Peripherals
 LIDARLite_v3HP lidar(&i2c);
@@ -31,20 +33,20 @@ LIDARLite_v3HP lidar(&i2c);
 Ticker ticker;
 
 void tick() {
+    led3 = !led3;
     // do LIDAR sensing
-	powerLed1=!powerLed1;
-    powerLed2=!powerLed2;
+
+//    lidar.takeRange();
+//
+//    if (!lidar.getBusyFlag()) {
+//        led1 = (lidar.readDistance() < 10) ? 0 : 1;
+//    }
 }
 
 int main() {
-	lidar.resetReferenceFilter();
-	powerLed1=1;
-    powerLed2=0;
-    ticker.attach(&tick, SAMPLE_RATE);
-    while(1) {
-        powerLed1=!powerLed1;
-        powerLed2=!powerLed2;
-        ThisThread::sleep_for(1000);
-    }
+    ticker.attach(&tick, 1);
+
+    lidar.configure();
+	//lidar.resetReferenceFilter();
 }
 

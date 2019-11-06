@@ -21,7 +21,7 @@
 #include "ble/BLE.h"
 #include "ble/Gap.h"
 
-extern EventQueue *eventQueue;
+extern EventQueue eventQueue;
 
 void onBleInitError(BLE &ble, ble_error_t error);
 

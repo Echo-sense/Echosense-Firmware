@@ -16,12 +16,15 @@
 
 #include "mbed.h"
 #include "pins.h"
+#include "bleSetup.h"
 #include <LIDARLite_v3HP.h>
 
-#define SAMPLE_RATE 1000
+#define SAMPLE_RATE 1000000
+#define EVENT_QUEUE_DEPTH 16
 
 //IO
 I2C i2c(I2C_SDA, I2C_SCL);
+Serial serial(p20, p18);
 DigitalOut powerLed1(POWER_LED1);
 DigitalOut powerLed2(POWER_LED2);
 
@@ -30,6 +33,9 @@ LIDARLite_v3HP lidar(&i2c);
 
 Ticker ticker;
 
+EventQueue eventQueue(EVENTS_EVENT_SIZE * EVENT_QUEUE_DEPTH);
+Thread eventThread;
+
 void tick() {
     // do LIDAR sensing
 	powerLed1=!powerLed1;
@@ -37,14 +43,12 @@ void tick() {
 }
 
 int main() {
-	lidar.resetReferenceFilter();
-	powerLed1=1;
-    powerLed2=0;
-    ticker.attach(&tick, SAMPLE_RATE);
-    while(1) {
-        powerLed1=!powerLed1;
-        powerLed2=!powerLed2;
-        ThisThread::sleep_for(1000);
-    }
+    ticker.attach_us(eventQueue.event(tick), SAMPLE_RATE);
+
+    BLE &ble = BLE::Instance();
+    ble.onEventsToProcess(scheduleBleEventsProcessing);
+    ble.init(bleInitComplete);
+
+    eventThread.start(callback(&eventQueue, &EventQueue::dispatch_forever));
 }
 

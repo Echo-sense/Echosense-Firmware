@@ -16,14 +16,16 @@
 
 #include "bleSetup.h"
 #include "services/NotifyService.h"
+#include "bleSetup.h"
 
 const static char     DEVICE_NAME[] = "EchoSense";
-const static uint16_t uuid16_list[] = {0xAAAA};
+const static uint16_t uuid16_list[] = {NotifyService::NOTIFY_SERVICE_UUID.getShortUUID()};
 const static uint8_t* uuid128_list = NotifyService::NOTIFY_SERVICE_UUID.getBaseUUID();
 NotifyService *notifyService;
 
 void onBleInitError(BLE &ble, ble_error_t error) {
     // handle initialization error
+    printf("error occur");
 }
 
 void bleDisconnectCallback(const Gap::DisconnectionCallbackParams_t *params) {
@@ -31,6 +33,15 @@ void bleDisconnectCallback(const Gap::DisconnectionCallbackParams_t *params) {
 
 void blePrintMacAddress() {
     // TODO: setup serial console code
+    /* Print out device MAC address to the console*/
+    Gap::AddressType_t addr_type;
+    Gap::Address_t address;
+    BLE::Instance().gap().getAddress(&addr_type, address);
+    printf("DEVICE MAC ADDRESS: ");
+    for (int i = 5; i >= 1; i--){
+        printf("%02x:", address[i]);
+    }
+    printf("%02x\r\n", address[0]);
 }
 
 void bleInitComplete(BLE::InitializationCompleteCallbackContext *params) {
@@ -67,7 +78,7 @@ void bleInitComplete(BLE::InitializationCompleteCallbackContext *params) {
     ble.gap().setAdvertisingInterval(1000); /* 1000ms. */
     ble.gap().startAdvertising();
     ble::AdvertisingDataBuilder builder();
-    builder.addOrAppendData()
+    //builder.addOrAppendData();
     blePrintMacAddress();
 }
 

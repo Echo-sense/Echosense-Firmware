@@ -17,20 +17,27 @@
 #include "NotifyService.h"
 
 // totally random UUIDs I swear
-const UUID NotifyService::NOTIFY_SERVICE_UUID              = UUID{"2020A000-5543-4945-43484-F53454E5345"};
-const UUID NotifyService::NOTIFY_STATE_CHARACTERISTIC_UUID = UUID{"2020A001-5543-4945-43484-F53454E5345"};
-
+const UUID NotifyService::NOTIFY_SERVICE_UUID              = UUID{0xA000};
+const UUID NotifyService::NOTIFY_STATE_CHARACTERISTIC_UUID = UUID{0xA001};
 NotifyService::NotifyService(BLE &_ble) {
     ble               = &_ble;
     notificationState = new ReadOnlyGattCharacteristic<bool>(
         NOTIFY_STATE_CHARACTERISTIC_UUID, 0,
         GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_NOTIFY);
 
-    GattCharacteristic *charTable[]   = {};
+    GattCharacteristic *charTable[]   = {notificationState};
     GattService        *buttonService = new GattService(NOTIFY_SERVICE_UUID, charTable, sizeof(charTable) / sizeof(GattCharacteristic *));
 
     ble->gattServer().addService(*buttonService);
 }
 
-void NotifyService::sendNotification() {
+void NotifyService::sendNotification(bool newState) {
+    //modify the attribute
+    ble->gattServer().write(notificationState->getValueHandle(), (uint8_t *)&newState, sizeof(bool));
+
+}
+
+bool NotifyService::readnotificationState() {
+    //return notificationState;
+    return 1;
 }

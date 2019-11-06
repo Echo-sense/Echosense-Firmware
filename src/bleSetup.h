@@ -20,8 +20,11 @@
 #include <mbed.h>
 #include "ble/BLE.h"
 #include "ble/Gap.h"
+#include "services/NotifyService.h"
+
 
 extern EventQueue eventQueue;
+extern NotifyService* notifyService;
 
 void onBleInitError(BLE &ble, ble_error_t error);
 

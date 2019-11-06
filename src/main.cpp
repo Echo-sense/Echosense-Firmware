@@ -24,7 +24,7 @@
 
 //IO
 I2C i2c(I2C_SDA, I2C_SCL);
-Serial serial(p20, p18);
+Serial serial(USBTX, USBRX);
 DigitalOut powerLed1(POWER_LED1);
 DigitalOut powerLed2(POWER_LED2);
 
@@ -36,10 +36,12 @@ Ticker ticker;
 EventQueue eventQueue(EVENTS_EVENT_SIZE * EVENT_QUEUE_DEPTH);
 Thread eventThread;
 
+
 void tick() {
     // do LIDAR sensing
 	powerLed1=!powerLed1;
     powerLed2=!powerLed2;
+    notifyService->sendNotification(1);
 }
 
 int main() {
@@ -48,7 +50,7 @@ int main() {
     BLE &ble = BLE::Instance();
     ble.onEventsToProcess(scheduleBleEventsProcessing);
     ble.init(bleInitComplete);
-
+    blePrintMacAddress();
     eventThread.start(callback(&eventQueue, &EventQueue::dispatch_forever));
 }
 

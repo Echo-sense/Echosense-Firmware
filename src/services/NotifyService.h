@@ -28,7 +28,9 @@ public:
 
     NotifyService(BLE &_ble);
 
-    void sendNotification();
+
+    void sendNotification(bool newState);
+    bool readnotificationState();
 
 private:
     BLE                              *ble;

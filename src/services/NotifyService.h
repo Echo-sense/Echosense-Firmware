@@ -35,6 +35,7 @@ public:
 private:
     BLE                              *ble;
     ReadOnlyGattCharacteristic<bool> *notificationState;
+    bool                            valueState;
 };
 
 #endif //ECHOSENSE_FIRMWARE_NOTIFYSERVICE_H

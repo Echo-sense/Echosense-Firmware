@@ -31,6 +31,8 @@ DigitalOut powerLed2(POWER_LED2);
 //Peripherals
 LIDARLite_v3HP lidar(&i2c);
 
+bool signal=0;
+
 Ticker ticker;
 
 EventQueue eventQueue(EVENTS_EVENT_SIZE * EVENT_QUEUE_DEPTH);
@@ -41,7 +43,9 @@ void tick() {
     // do LIDAR sensing
 	powerLed1=!powerLed1;
     powerLed2=!powerLed2;
-    notifyService->sendNotification(1);
+    signal=!signal;
+    notifyService->sendNotification(signal);
+    printf("%d\n", notifyService->readnotificationState());
 }
 
 int main() {

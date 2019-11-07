@@ -34,10 +34,11 @@ NotifyService::NotifyService(BLE &_ble) {
 void NotifyService::sendNotification(bool newState) {
     //modify the attribute
     ble->gattServer().write(notificationState->getValueHandle(), (uint8_t *)&newState, sizeof(bool));
+    valueState=newState;
 
 }
 
 bool NotifyService::readnotificationState() {
     //return notificationState;
-    return 1;
+    return valueState;
 }

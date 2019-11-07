@@ -18,10 +18,11 @@
 #include "pins.h"
 #include <LIDARLite_v3HP.h>
 
-#define SAMPLE_RATE 10000
+#define SAMPLE_RATE 500 //ms
 
 //IO
 I2C i2c(I2C_SDA0, I2C_SCL0);
+Serial pc(USBTX, USBRX);
 DigitalOut led1(p8);
 DigitalOut led2(p5);
 DigitalOut led3(p3);
@@ -30,23 +31,35 @@ DigitalOut led3(p3);
 //Peripherals
 LIDARLite_v3HP lidar(&i2c);
 
+EventQueue eventQueue(32 * EVENTS_EVENT_SIZE);
+Thread eventThread;
 Ticker ticker;
+
+uint16_t dist= 0;
 
 void tick() {
     led3 = !led3;
-    // do LIDAR sensing
+    
+    lidar.takeRange();
 
-//    lidar.takeRange();
-//
-//    if (!lidar.getBusyFlag()) {
-//        led1 = (lidar.readDistance() < 10) ? 0 : 1;
-//    }
+    lidar.waitForBusy();
+    dist= lidar.readDistance();
+    led1 = (dist< 10) ? 0 : 1;
+    pc.printf("[Porty-A]%d[END]\r\n", dist);
 }
 
 int main() {
-    ticker.attach(&tick, 1);
+    uint8_t cmd[2];
+    cmd[0] = 0x04;
+    cmd[1] = 0x00;
+    pc.printf("starting event loop\r\n");
 
     lidar.configure();
-	//lidar.resetReferenceFilter();
+    //lidar.resetReferenceFilter();
+
+    lidar.takeRange();
+
+    eventQueue.call_every(SAMPLE_RATE, &tick);
+    eventQueue.dispatch_forever();
 }
 

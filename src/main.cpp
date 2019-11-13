@@ -19,8 +19,12 @@
 #include "bleSetup.h"
 #include <LIDARLite_v3HP.h>
 
-#define SAMPLE_RATE 500 //ms
+#define SAMPLE_RATE 50 //ms
 #define EVENT_QUEUE_DEPTH 16
+
+#define TRIGGER_SPEED_KPH 5 /* km/h */
+#define TRIGGER_SPEED (1000 / 36) * TRIGGER_SPEED_KPH /* cm/s */
+#define MAX_DIST = 175 /* cm */
 
 //IO
 I2C        i2c(I2C_SDA0, I2C_SCL0);
@@ -35,8 +39,8 @@ LIDARLite_v3HP lidar(&i2c);
 EventQueue eventQueue(32 * EVENTS_EVENT_SIZE);
 Ticker     ticker;
 
-uint16_t dist   = 0;
-bool     signal = 0;
+uint16_t dist               = 0;
+bool     notificationSignal = 0;
 
 void tick() {
     led3 = !led3;
@@ -44,12 +48,22 @@ void tick() {
     lidar.takeRange();
 
     lidar.waitForBusy();
-    dist = lidar.readDistance();
+
+    uint16_t oldDist = dist;
+    uint16_t newDist = lidar.readDistance();
+    dist = (dist + newDist) / 2;
+    int16_t velocity = ((oldDist - dist)) * (1000 / SAMPLE_RATE);
     led1 = (dist < 10) ? 0 : 1;
-    pc.printf("[Porty-A]%d[END]\r\n", dist);
-    signal = !signal;
-    notifyService->sendNotification(signal);
-    printf("%d\n", notifyService->readnotificationState());
+    //pc.printf("[Porty-A]%d[END]\r\n", dist);
+    //pc.printf("[Porty-B]%d[END]\r\n", newDist);
+    //pc.printf("[Porty-C]%d[END]\r\n", velocity);
+
+    if (velocity > TRIGGER_SPEED) {
+        notifyService->sendNotification(1);
+        pc.printf("Vehicle approaching!\n");
+    } else {
+        notifyService->sendNotification(0);
+    }
 }
 
 int main() {

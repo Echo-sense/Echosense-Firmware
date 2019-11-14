@@ -43,7 +43,7 @@ uint16_t dist               = 0;
 bool     notificationSignal = 0;
 
 void tick() {
-    led3 = !led3;
+    //led3 = !led3;
 
     lidar.takeRange();
 
@@ -53,7 +53,7 @@ void tick() {
     uint16_t newDist = lidar.readDistance();
     dist = (dist + newDist) / 2;
     int16_t velocity = ((oldDist - dist)) * (1000 / SAMPLE_RATE);
-    led1 = (dist < 10) ? 0 : 1;
+    //led1 = (dist < 10) ? 0 : 1;
     //pc.printf("[Porty-A]%d[END]\r\n", dist);
     //pc.printf("[Porty-B]%d[END]\r\n", newDist);
     //pc.printf("[Porty-C]%d[END]\r\n", velocity);
@@ -76,7 +76,6 @@ int main() {
     BLE &ble = BLE::Instance();
     ble.onEventsToProcess(scheduleBleEventsProcessing);
     ble.init(bleInitComplete);
-    blePrintMacAddress();
 
     // setup Ticker
     pc.printf("starting event loop\r\n");

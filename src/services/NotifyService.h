@@ -23,19 +23,19 @@
 
 class NotifyService {
 public:
-    const static UUID NOTIFY_SERVICE_UUID;
-    const static UUID NOTIFY_STATE_CHARACTERISTIC_UUID;
+    static const uint16_t NOTIFY_SERVICE_UUID              = 0xA000;
+    static const uint16_t NOTIFY_STATE_CHARACTERISTIC_UUID = 0xA001;
 
     NotifyService(BLE &_ble);
 
-
     void sendNotification(bool newState);
+
     bool readnotificationState();
 
 private:
     BLE                              *ble;
     ReadOnlyGattCharacteristic<bool> *notificationState;
-    bool                            valueState;
+    bool                             valueState;
 };
 
 #endif //ECHOSENSE_FIRMWARE_NOTIFYSERVICE_H

@@ -16,9 +16,6 @@
 
 #include "NotifyService.h"
 
-// totally random UUIDs I swear
-const UUID NotifyService::NOTIFY_SERVICE_UUID              = UUID{0xA000};
-const UUID NotifyService::NOTIFY_STATE_CHARACTERISTIC_UUID = UUID{0xA001};
 NotifyService::NotifyService(BLE &_ble) {
     ble               = &_ble;
     notificationState = new ReadOnlyGattCharacteristic<bool>(

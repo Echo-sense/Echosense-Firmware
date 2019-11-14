@@ -19,20 +19,18 @@
 #include "bleSetup.h"
 
 const static char     DEVICE_NAME[] = "EchoSense";
-const static uint16_t uuid16_list[] = {NotifyService::NOTIFY_SERVICE_UUID.getShortUUID()};
-const static uint8_t* uuid128_list = NotifyService::NOTIFY_SERVICE_UUID.getBaseUUID();
+const static uint16_t uuid16_list[] = {NotifyService::NOTIFY_SERVICE_UUID};
 NotifyService *notifyService;
 
 void onBleInitError(BLE &ble, ble_error_t error) {
-    // handle initialization error
-    printf("error occur");
+    printf("an error occurred initiating bluetooth");
 }
 
 void bleDisconnectCallback(const Gap::DisconnectionCallbackParams_t *params) {
+    BLE::Instance().gap().startAdvertising(); // restart advertising
 }
 
 void blePrintMacAddress() {
-    // TODO: setup serial console code
     /* Print out device MAC address to the console*/
     Gap::AddressType_t addr_type;
     Gap::Address_t address;
@@ -71,7 +69,6 @@ void bleInitComplete(BLE::InitializationCompleteCallbackContext *params) {
     // Start advertising
     ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED | GapAdvertisingData::LE_GENERAL_DISCOVERABLE);
     ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_16BIT_SERVICE_IDS, (uint8_t *) uuid16_list, sizeof(uuid16_list));
-    ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_128BIT_SERVICE_IDS, uuid128_list, sizeof(uuid128_list));
     ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME, (uint8_t *) DEVICE_NAME, sizeof(DEVICE_NAME));
     ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::APPEARANCE, (uint8_t *) GapAdvertisingData::GENERIC_CYCLING, sizeof(GapAdvertisingData::Appearance_t));
     ble.gap().setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);

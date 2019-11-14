@@ -23,10 +23,12 @@ const static uint16_t uuid16_list[] = {NotifyService::NOTIFY_SERVICE_UUID};
 NotifyService *notifyService;
 
 void onBleInitError(BLE &ble, ble_error_t error) {
-    printf("an error occurred initiating bluetooth");
+    printf("BLUETOOTH FAILED TO INITIALIZE");
 }
 
 void bleDisconnectCallback(const Gap::DisconnectionCallbackParams_t *params) {
+    printf("BLUETOOTH DISCONNECTED, RESUMING ADVERTISEMENT");
+
     BLE::Instance().gap().startAdvertising(); // restart advertising
 }
 
@@ -57,6 +59,8 @@ void bleInitComplete(BLE::InitializationCompleteCallbackContext *params) {
         // handle not-default-instance error
         return;
     }
+
+    printf("BLUETOOTH INITIALIZATION COMPLETE");
 
     // add disconnect callback
     ble.gap().onDisconnection(bleDisconnectCallback);

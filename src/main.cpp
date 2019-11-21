@@ -72,8 +72,10 @@ void tick() {
     if (velocity > TRIGGER_SPEED) {
         notifyService->sendNotification(1);
         pc.printf("Vehicle approaching!\n");
+        led2 = 1;
     } else {
         notifyService->sendNotification(0);
+        led2 = 0;
     }
 
     lidar.takeRange();

@@ -1,0 +1,16 @@
+{
+    "macros": [
+        "MBED_HEAP_STATS_ENABLED=1",
+        "MBED_STACK_STATS_ENABLED=1",
+        "MBED_MEM_TRACING_ENABLED=1"
+    ],
+    "config": {
+        "thread_stack_size": {
+            "value": 2048
+        },
+        "main_stack_size": {
+            "value": 2048
+        }
+    }
+}
+

@@ -24,6 +24,10 @@
 
 #define TRIGGER_SPEED_KPH 5 /* km/h */
 #define TRIGGER_SPEED (1000 / 36) * TRIGGER_SPEED_KPH /* cm/s */
+
+#define MAX_SPEED_KPH 60 /* km/h */
+#define MAX_SPEED (1000 / 36) * MAX_SPEED_KPH /* cm/s */
+
 #define MAX_DIST = 175 /* cm */
 
 //IO
@@ -51,7 +55,14 @@ void tick() {
 
     uint16_t oldDist = dist;
     uint16_t newDist = lidar.readDistance();
-    dist = (dist + newDist) / 2;
+	
+	int16_t velocity_check = ((oldDist - newDist)) * (1000 / SAMPLE_RATE);
+	if(velocity_check > MAX_SPEED) {
+		dist = newDist;
+		oldDist = newDist;
+	}
+	else {dist = (dist + newDist) / 2;}
+	
     int16_t velocity = ((oldDist - dist)) * (1000 / SAMPLE_RATE);
     //led1 = (dist < 10) ? 0 : 1;
     //pc.printf("[Porty-A]%d[END]\r\n", dist);

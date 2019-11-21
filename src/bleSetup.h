@@ -21,10 +21,11 @@
 #include "ble/BLE.h"
 #include "ble/Gap.h"
 #include "services/NotifyService.h"
-
+#include "services/DeviceInformationService.h"
 
 extern EventQueue eventQueue;
-extern NotifyService* notifyService;
+extern NotifyService            *notifyService;
+//extern DeviceInformationService deviceInformationService;
 
 void onBleInitError(BLE &ble, ble_error_t error);
 

@@ -19,15 +19,19 @@
 #include "bleSetup.h"
 
 const static char     DEVICE_NAME[] = "EchoSense";
+const static char     MANUFACTURER_NAME[] = "Team EchoSense";
 const static uint16_t uuid16_list[] = {NotifyService::NOTIFY_SERVICE_UUID};
-NotifyService *notifyService;
+/* Device Information Service should not be advertised */
+
+NotifyService            *notifyService;
+DeviceInformationService *deviceInformationService;
 
 void onBleInitError(BLE &ble, ble_error_t error) {
-    printf("BLUETOOTH FAILED TO INITIALIZE");
+    printf("BLUETOOTH FAILED TO INITIALIZE\r\n");
 }
 
 void bleDisconnectCallback(const Gap::DisconnectionCallbackParams_t *params) {
-    printf("BLUETOOTH DISCONNECTED, RESUMING ADVERTISEMENT");
+    printf("BLUETOOTH DISCONNECTED, RESUMING ADVERTISEMENT\r\n");
 
     BLE::Instance().gap().startAdvertising(); // restart advertising
 }
@@ -35,14 +39,16 @@ void bleDisconnectCallback(const Gap::DisconnectionCallbackParams_t *params) {
 void blePrintMacAddress() {
     /* Print out device MAC address to the console*/
     Gap::AddressType_t addr_type;
-    Gap::Address_t address;
+    Gap::Address_t     address;
     BLE::Instance().gap().getAddress(&addr_type, address);
     printf("DEVICE MAC ADDRESS: ");
-    for (int i = 5; i >= 1; i--){
+    for (int i = 5; i >= 1; i--) {
         printf("%02x:", address[i]);
     }
     printf("%02x\r\n", address[0]);
 }
+
+
 
 void bleInitComplete(BLE::InitializationCompleteCallbackContext *params) {
     BLE         &ble  = params->ble;
@@ -60,13 +66,15 @@ void bleInitComplete(BLE::InitializationCompleteCallbackContext *params) {
         return;
     }
 
-    printf("BLUETOOTH INITIALIZATION COMPLETE");
+    printf("BLUETOOTH INITIALIZATION COMPLETE\n");
 
     // add disconnect callback
     ble.gap().onDisconnection(bleDisconnectCallback);
 
     // create services
     notifyService = new NotifyService(ble);
+    deviceInformationService = new DeviceInformationService(ble, MANUFACTURER_NAME);
+
 
     // TODO: handle callbacks for EchoSense here
 
@@ -75,11 +83,10 @@ void bleInitComplete(BLE::InitializationCompleteCallbackContext *params) {
     ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_16BIT_SERVICE_IDS, (uint8_t *) uuid16_list, sizeof(uuid16_list));
     ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME, (uint8_t *) DEVICE_NAME, sizeof(DEVICE_NAME));
     ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::APPEARANCE, (uint8_t *) GapAdvertisingData::GENERIC_CYCLING, sizeof(GapAdvertisingData::Appearance_t));
+    ble.gap().accumulateAdvertisingPayloadTxPower(0);
     ble.gap().setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);
-    ble.gap().setAdvertisingInterval(1000); /* 1000ms. */
+    ble.gap().setAdvertisingInterval(760); /* ms */
     ble.gap().startAdvertising();
-    ble::AdvertisingDataBuilder builder();
-    //builder.addOrAppendData();
     blePrintMacAddress();
 }
 

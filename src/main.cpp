@@ -33,9 +33,9 @@
 //IO
 I2C        i2c(I2C_SDA0, I2C_SCL0);
 Serial     pc(USBTX, USBRX);
-DigitalOut led1(p8);
-DigitalOut led2(p5);
-DigitalOut led3(p3);
+DigitalOut led1(LED1);
+DigitalOut led2(LED2);
+DigitalOut led3(LED3);
 
 //Peripherals
 LIDARLite_v3HP lidar(&i2c);
@@ -47,11 +47,11 @@ uint16_t dist               = 0;
 bool     notificationSignal = 0;
 
 void tick() {
-    //led3 = !led3;
-
-    lidar.takeRange();
-
-    lidar.waitForBusy();
+    if (lidar.getBusyFlag() == 1) {
+        led1 = 0;
+        return;
+    }
+    led1 = 1;
 
     uint16_t oldDist = dist;
     uint16_t newDist = lidar.readDistance();
@@ -75,16 +75,25 @@ void tick() {
     } else {
         notifyService->sendNotification(0);
     }
+
+    lidar.takeRange();
 }
 
+
+
 int main() {
+    led1 = 1;
+    pc.baud(115200);
 
     // setup LIDAR
     lidar.configure();
     lidar.resetReferenceFilter();
 
+    //print_memory_info();
+
     // setup BLE
     BLE &ble = BLE::Instance();
+
     ble.onEventsToProcess(scheduleBleEventsProcessing);
     ble.init(bleInitComplete);
 

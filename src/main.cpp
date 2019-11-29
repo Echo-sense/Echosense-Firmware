@@ -43,8 +43,24 @@ LIDARLite_v3HP lidar(&i2c);
 EventQueue eventQueue(32 * EVENTS_EVENT_SIZE);
 Ticker     ticker;
 
+uint16_t inverseDeltaTime          = 1000 / SAMPLE_RATE;
 uint16_t dist               = 0;
 bool     notificationSignal = 0;
+
+void resetNotification() {
+    notifyService->sendNotification(0);
+    led2 = 0;
+}
+
+void sendNotification() {
+    if (notifyService->readnotificationState()) {
+        return;
+    }
+    pc.printf("VEHICLE APPROACHING!\n");
+    led2 = 1;
+    notifyService->sendNotification(1);
+    eventQueue.call_in(1000, &resetNotification);
+}
 
 void tick() {
     if (lidar.getBusyFlag() == 1) {
@@ -55,33 +71,27 @@ void tick() {
 
     uint16_t oldDist = dist;
     uint16_t newDist = lidar.readDistance();
-	
-	int16_t velocity_check = ((oldDist - newDist)) * (1000 / SAMPLE_RATE);
-	if(velocity_check > MAX_SPEED) {
-		dist = newDist;
-		oldDist = newDist;
-	}
-	else {dist = (dist + newDist) / 2;}
-	
-    int16_t velocity = ((oldDist - dist)) * (1000 / SAMPLE_RATE);
+
+    int16_t velocity_check = ((oldDist - newDist)) * inverseDeltaTime;
+    if (velocity_check > MAX_SPEED) {
+        dist    = newDist;
+        oldDist = newDist;
+    } else {
+        dist = (dist + newDist) / 2;
+    }
+
+    int16_t velocity = ((oldDist - dist)) * inverseDeltaTime;
     //led1 = (dist < 10) ? 0 : 1;
     //pc.printf("[Porty-A]%d[END]\r\n", dist);
     //pc.printf("[Porty-B]%d[END]\r\n", newDist);
     //pc.printf("[Porty-C]%d[END]\r\n", velocity);
 
     if (velocity > TRIGGER_SPEED) {
-        notifyService->sendNotification(1);
-        pc.printf("Vehicle approaching!\n");
-        led2 = 1;
-    } else {
-        notifyService->sendNotification(0);
-        led2 = 0;
+        sendNotification();
     }
 
     lidar.takeRange();
 }
-
-
 
 int main() {
     led1 = 1;

@@ -109,6 +109,9 @@ int main() {
     ble.onEventsToProcess(scheduleBleEventsProcessing);
     ble.init(bleInitComplete);
 
+    notifyService->sendNotification(0);
+
+
     // setup Ticker
     pc.printf("starting event loop\r\n");
     eventQueue.call_every(SAMPLE_RATE, &tick);

@@ -22,6 +22,8 @@
 #define SAMPLE_RATE 3000000
 #define EVENT_QUEUE_DEPTH 16
 
+
+
 //IO
 I2C i2c(I2C_SDA, I2C_SCL);
 Serial serial(USBTX, USBRX);
@@ -38,17 +40,50 @@ Ticker ticker;
 EventQueue eventQueue(EVENTS_EVENT_SIZE * EVENT_QUEUE_DEPTH);
 Thread eventThread;
 
+InterruptIn button(BUTTON1);
+
+enum {
+    RELEASED = 0,
+    PRESSED
+
+};
+
+static uint8_t buttonState = RELEASED;
+
+void buttonPressedCallback(void)
+{
+    /* Note that the buttonPressedCallback() executes in interrupt context, so it is safer to access
+     * BLE device API from the main thread. */
+    buttonState = PRESSED;
+}
+
+void buttonReleasedCallback(void)
+{
+    /* Note that the buttonReleasedCallback() executes in interrupt context, so it is safer to access
+     * BLE device API from the main thread. */
+    buttonState = RELEASED;
+}
 
 void tick() {
     // do LIDAR sensing
 	powerLed1=!powerLed1;
     powerLed2=!powerLed2;
-    signal=!signal;
+    if(buttonState==PRESSED) {
+        signal = 0;
+    }
+    else {
+        signal = 1;
+    }
+    //powerLed2=!powerLed2;
+    //signal=!signal;
     notifyService->sendNotification(signal);
     printf("%d\n", notifyService->readnotificationState());
 }
 
 int main() {
+    button.fall(buttonPressedCallback);
+    button.rise(buttonReleasedCallback);
+
     ticker.attach_us(eventQueue.event(tick), SAMPLE_RATE);
 
     BLE &ble = BLE::Instance();

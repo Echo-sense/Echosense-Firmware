@@ -19,7 +19,7 @@
 #include "bleSetup.h"
 #include <LIDARLite_v3HP.h>
 
-#define SAMPLE_RATE 1000000
+#define SAMPLE_RATE 3000000
 #define EVENT_QUEUE_DEPTH 16
 
 //IO

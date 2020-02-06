@@ -37,6 +37,9 @@ DigitalOut led1(LED1);
 DigitalOut led2(LED2);
 DigitalOut led3(LED3);
 
+PwmOut motor(A3);
+InterruptIn rotation(A2);
+
 //Peripherals
 LIDARLite_v3HP lidar(&i2c);
 
@@ -46,6 +49,8 @@ Ticker     ticker;
 uint16_t inverseDeltaTime          = 1000 / SAMPLE_RATE;
 uint16_t dist               = 0;
 bool     notificationSignal = 0;
+bool     motorState = 0;
+uint16_t motorSpeed = 0;
 
 void resetNotification() {
     notifyService->sendNotification(0);
@@ -59,7 +64,7 @@ void sendNotification() {
     pc.printf("VEHICLE APPROACHING!\n");
     led2 = 1;
     notifyService->sendNotification(1);
-    eventQueue.call_in(1000, &resetNotification);
+    eventQueue.call_in(3000, &resetNotification);
 }
 
 void tick() {
@@ -93,9 +98,18 @@ void tick() {
     lidar.takeRange();
 }
 
+void test() {
+
+    motorSpeed += 100;
+    motorSpeed %= 32768;
+    motor.period(motorSpeed);
+}
+
 int main() {
     led1 = 1;
     pc.baud(115200);
+
+    motor.period_us(32768);
 
     // setup LIDAR
     lidar.configure();
@@ -115,6 +129,7 @@ int main() {
     // setup Ticker
     pc.printf("starting event loop\r\n");
     eventQueue.call_every(SAMPLE_RATE, &tick);
+    eventQueue.call_every(100, &test);
     eventQueue.dispatch_forever();
 }
 

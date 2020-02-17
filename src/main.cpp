@@ -18,6 +18,12 @@
 #include "pins.h"
 #include "bleSetup.h"
 #include <LIDARLite_v3HP.h>
+#include <cmath>
+#include <complex>
+#include <cstdio>
+#include <array>
+
+//using namespace std;
 
 #define SAMPLE_RATE 50 //ms
 #define EVENT_QUEUE_DEPTH 16
@@ -54,6 +60,52 @@ bool     notificationSignal = 0;
 uint16_t lidarSampleCount = 0;
 
 Timer timer;
+uint16_t totalRotationTime = 0;
+
+constexpr uint16_t mCeil(float num) {
+    return (static_cast<float>(static_cast<uint16_t>(num)) == num)
+            ? static_cast<uint16_t>(num)
+                    : static_cast<uint16_t>(num) + ((num > 0) ? 1 : 0);
+}
+
+constexpr uint16_t mFloor(float num) {
+    return (static_cast<float>(static_cast<uint16_t>(num))==num)
+        ? static_cast<uint16_t>(num)
+        : static_cast<uint16_t>(num) - ((num < 0) ? 1:0);
+}
+
+constexpr uint16_t mRound(float num) {
+    return (num-static_cast<float>(mFloor(num))<static_cast<float>(mCeil(num))-num) ?
+        mFloor(num) 
+        : mCeil(num);
+}
+
+
+template<typename T>
+constexpr T look_up_table_elem (int i) {
+    return {};
+}
+ 
+template<>
+constexpr uint16_t look_up_table_elem (int i) {
+    return mRound (cos (static_cast <long double>(i) / 32 * 3.14159 / 4) * 1024);
+}
+ 
+template<typename T, int... N>
+struct lookup_table_expand{};
+ 
+template<typename T, int... N>
+struct lookup_table_expand<T, 1, N...> {
+    static constexpr std::array<T, sizeof...(N) + 1> values = {{ look_up_table_elem<T>(0), N... }};
+};
+ 
+template<typename T, int L, int... N> 
+struct lookup_table_expand<T, L, N...>: lookup_table_expand<T, L-1, look_up_table_elem<T>(L-1), N...> {};
+ 
+template<typename T, int... N>
+constexpr std::array<T, sizeof...(N) + 1> lookup_table_expand<T, 1, N...>::values;
+ 
+const std::array<uint16_t, 64> lookup_table = lookup_table_expand<uint16_t, 64>::values;
 
 void resetNotification() {
     notifyService->sendNotification(0);
@@ -101,8 +153,10 @@ void tick() {
     lidar.takeRange();
 }
 
-void printTime() {
-;
+void getTotalRotationTime() {
+    totalRotationTime = timer.read_ms();
+    timer.stop();
+    pc.printf("%d\r\n", totalRotationTime);
 }
 
 void test() {
@@ -151,13 +205,16 @@ int main() {
     notifyService->sendNotification(0);
 
     lidarInterrupt.fall(&lidarInterruptFn);
+    
+
 
     // setup Ticker
     pc.printf("starting event loop\r\n");
     //eventQueue.call_every(SAMPLE_RATE, &tick);
     // eventQueue.call_every(1000, &test);
     timer.start();
-    eventQueue.call(&test);
+    //eventQueue.call(&test);
+    rotation.fall(&getTotalRotationTime);
     eventQueue.dispatch_forever();
 }
 

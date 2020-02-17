@@ -156,7 +156,7 @@ void tick() {
 void getTotalRotationTime() {
     totalRotationTime = timer.read_ms();
     timer.stop();
-    pc.printf("%d\r\n", totalRotationTime);
+    pc.printf("total rotation time is %d\r\n", totalRotationTime);
 }
 
 void test() {

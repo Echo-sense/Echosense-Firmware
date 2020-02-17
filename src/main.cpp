@@ -57,7 +57,7 @@ bool     notificationSignal = 0;
 uint16_t lidarSampleCount = 0;
 
 Timer timer;
-uint16_t totalRotationTime = 0;
+uint32_t totalRotationTime = 0;
 
 void resetNotification() {
     notifyService->sendNotification(0);
@@ -105,10 +105,13 @@ void tick() {
     lidar.takeRange();
 }
 
-void getTotalRotationTime() {
-    totalRotationTime = timer.read_ms();
-    timer.stop();
+void printRotationTime() {
     pc.printf("total rotation time is %d\r\n", totalRotationTime);
+}
+void rotationInterrupt() {
+    totalRotationTime = timer.read_us();
+    timer.reset();
+    eventQueue.call(&printRotationTime);
 }
 
 void test() {
@@ -139,16 +142,17 @@ int main() {
     pc.baud(115200);
 
     //motor.period_us(32768);
-    motor = 0;
+    motor = 1;
 
     // setup LIDAR
     lidar.configure(1, 1);
     lidar.resetReferenceFilter();
 
 
+    /*
     for (uint16_t x = 0; x < 256; x++) {
         pc.printf("[Porty-A]%d[END]\r\n", lut_cos(x));
-    }
+    }*/
     //print_memory_info();
 
     // setup BLE
@@ -159,17 +163,13 @@ int main() {
 
     notifyService->sendNotification(0);
 
-    lidarInterrupt.fall(&lidarInterruptFn);
-    
-
-
     // setup Ticker
     pc.printf("starting event loop\r\n");
     //eventQueue.call_every(SAMPLE_RATE, &tick);
     // eventQueue.call_every(1000, &test);
     timer.start();
     //eventQueue.call(&test);
-    rotation.fall(&getTotalRotationTime);
+    rotation.fall(&rotationInterrupt);
     eventQueue.dispatch_forever();
 }
 

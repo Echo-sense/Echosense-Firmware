@@ -37,20 +37,23 @@ DigitalOut led1(LED1);
 DigitalOut led2(LED2);
 DigitalOut led3(LED3);
 
-PwmOut motor(A3);
+DigitalOut  motor(A3);
 InterruptIn rotation(A2);
 
 //Peripherals
 LIDARLite_v3HP lidar(&i2c);
+InterruptIn    lidarInterrupt(D9);
 
 EventQueue eventQueue(32 * EVENTS_EVENT_SIZE);
 Ticker     ticker;
 
-uint16_t inverseDeltaTime          = 1000 / SAMPLE_RATE;
+uint16_t inverseDeltaTime   = 1000 / SAMPLE_RATE;
 uint16_t dist               = 0;
 bool     notificationSignal = 0;
-bool     motorState = 0;
-uint16_t motorSpeed = 0;
+
+uint16_t lidarSampleCount = 0;
+
+Timer timer;
 
 void resetNotification() {
     notifyService->sendNotification(0);
@@ -98,22 +101,44 @@ void tick() {
     lidar.takeRange();
 }
 
-void test() {
+void printTime() {
+;
+}
 
-    motorSpeed += 100;
-    motorSpeed %= 32768;
-    motor.period(motorSpeed);
+void test() {
+    //motor = !motor;
+    lidarSampleCount++;
+    if (lidarSampleCount != 1000) {
+        eventQueue.call(&test);
+    } else {
+        uint16_t time = timer.read_ms();
+        pc.printf("%d\r\n", time);
+        timer.stop();
+    }
+    lidar.readDistance();
+    //pc.printf("interrupt!\n");
+
+    //motorSpeed += 100;
+    //motorSpeed %= 32768;
+    //motor.pulsewidth_us(motorSpeed);
+}
+
+void lidarInterruptFn() {
+    lidar.takeRange();
+    led1 = !led1;
 }
 
 int main() {
     led1 = 1;
     pc.baud(115200);
 
-    motor.period_us(32768);
+    //motor.period_us(32768);
+    motor = 1;
 
     // setup LIDAR
-    lidar.configure();
+    lidar.configure(1, 1);
     lidar.resetReferenceFilter();
+
 
     //print_memory_info();
 
@@ -125,11 +150,14 @@ int main() {
 
     notifyService->sendNotification(0);
 
+    lidarInterrupt.fall(&lidarInterruptFn);
 
     // setup Ticker
     pc.printf("starting event loop\r\n");
-    eventQueue.call_every(SAMPLE_RATE, &tick);
-    eventQueue.call_every(100, &test);
+    //eventQueue.call_every(SAMPLE_RATE, &tick);
+    // eventQueue.call_every(1000, &test);
+    timer.start();
+    eventQueue.call(&test);
     eventQueue.dispatch_forever();
 }
 

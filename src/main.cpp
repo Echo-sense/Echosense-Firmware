@@ -17,6 +17,7 @@
 #include "mbed.h"
 #include "pins.h"
 #include "bleSetup.h"
+#include "trig.h"
 #include <LIDARLite_v3HP.h>
 
 #define SAMPLE_RATE 50 //ms
@@ -133,13 +134,16 @@ int main() {
     pc.baud(115200);
 
     //motor.period_us(32768);
-    motor = 1;
+    motor = 0;
 
     // setup LIDAR
     lidar.configure(1, 1);
     lidar.resetReferenceFilter();
 
 
+    for (uint16_t x = 0; x < 256; x++) {
+        pc.printf("[Porty-A]%d[END]\r\n", lut_cos(x));
+    }
     //print_memory_info();
 
     // setup BLE

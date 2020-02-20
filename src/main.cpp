@@ -133,13 +133,14 @@ int main() {
     led1 = 1;
     pc.baud(115200);
 
-    //motor.period_us(32768);
-    motor = 1;
+    // setup rotation
+    pc.printf("starting motor\r\n");
+    rotation.fall(&rotationInterrupt); // setup rotation sensor interrupt
+    motor = 1; // turn on motor
 
     // setup LIDAR
     lidar.configure(1, 1);
     lidar.resetReferenceFilter();
-
 
     /*
     for (uint16_t x = 0; x < 256; x++) {
@@ -160,8 +161,6 @@ int main() {
     //eventQueue.call_every(SAMPLE_RATE, &tick);
     // eventQueue.call_every(1000, &test);
     timer.start();
-    //eventQueue.call(&test);
-    rotation.fall(&rotationInterrupt);
     eventQueue.dispatch_forever();
 }
 

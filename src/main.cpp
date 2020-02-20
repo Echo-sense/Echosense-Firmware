@@ -31,6 +31,11 @@
 #define MAX_SPEED_KPH 60 /* km/h */
 #define MAX_SPEED (1000 / 36) * MAX_SPEED_KPH /* cm/s */
 
+#define MAX_PERIOD 1000000
+#define MIN_PERIOD 100000
+
+#define FREQUENCY_NUMERATOR (1<<28)
+
 #define MAX_DIST = 175 /* cm */
 
 //IO
@@ -54,10 +59,13 @@ uint16_t inverseDeltaTime   = 1000 / SAMPLE_RATE;
 uint16_t dist               = 0;
 bool     notificationSignal = 0;
 
-uint16_t lidarSampleCount = 0;
+uint16_t lidarSampleCount  = 0;
 
-Timer timer;
-uint32_t totalRotationTime = 0;
+Timer    timer;
+uint32_t rotationPeriod    = 0; // time it takes for the lidar sensor to make one rotation
+uint32_t rotationFrequency = 0; // fixed point rotation frequency, FREQUENCY_NUMERATOR / rotationPeriod
+
+bool atSpeed = 0;
 
 void resetNotification() {
     notifyService->sendNotification(0);
@@ -106,35 +114,19 @@ void tick() {
 }
 
 void printRotationTime() {
-    pc.printf("total rotation time is %d\r\n", totalRotationTime);
+    pc.printf("total rotation time is %d\r\n", rotationPeriod);
 }
+
 void rotationInterrupt() {
-    totalRotationTime = timer.read_us();
+    rotationPeriod = timer.read_us();
+    atSpeed        = ((rotationPeriod > MIN_PERIOD) || (rotationPeriod < MAX_PERIOD));
+
+    if (atSpeed) {
+        rotationFrequency = FREQUENCY_NUMERATOR / rotationPeriod;
+    }
+
     timer.reset();
     eventQueue.call(&printRotationTime);
-}
-
-void test() {
-    //motor = !motor;
-    lidarSampleCount++;
-    if (lidarSampleCount != 1000) {
-        eventQueue.call(&test);
-    } else {
-        uint16_t time = timer.read_ms();
-        pc.printf("%d\r\n", time);
-        timer.stop();
-    }
-    lidar.readDistance();
-    //pc.printf("interrupt!\n");
-
-    //motorSpeed += 100;
-    //motorSpeed %= 32768;
-    //motor.pulsewidth_us(motorSpeed);
-}
-
-void lidarInterruptFn() {
-    lidar.takeRange();
-    led1 = !led1;
 }
 
 int main() {

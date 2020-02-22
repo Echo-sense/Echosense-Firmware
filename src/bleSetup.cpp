@@ -16,7 +16,6 @@
 
 #include "bleSetup.h"
 #include "services/NotifyService.h"
-#include "bleSetup.h"
 
 const static char     DEVICE_NAME[] = "EchoSense";
 const static char     MANUFACTURER_NAME[] = "Team EchoSense";

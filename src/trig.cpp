@@ -46,7 +46,9 @@ constexpr std::array<T, sizeof...(N) + 1> lookup_table_expand<T, 1, N...>::value
 const std::array<uint16_t, 64> cosineLUT = lookup_table_expand<uint16_t, 64>::values;
 
 int16_t lut_cos(uint16_t theta) {
-    theta %= 256; // 0 to 255
+    while (theta >= 256) {
+        theta -= 256; // 0 to 255
+    }
     int16_t sign = 1;
     if (theta >= 128) {
         theta = 255 - theta; // 0 to 127
@@ -60,7 +62,9 @@ int16_t lut_cos(uint16_t theta) {
 }
 
 int16_t lut_sin(uint16_t theta) {
-    theta %= 256; //0 to 255
+    while (theta >= 256) {
+        theta -= 256; // 0 to 255
+    }
     int16_t sign = 1;
     if (theta >= 128) {
         theta = 255 - theta; // 0 to 127

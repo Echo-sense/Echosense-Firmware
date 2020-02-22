@@ -22,19 +22,9 @@
 
 //using namespace std;
 
-#define SAMPLE_RATE 50 //ms
 #define EVENT_QUEUE_DEPTH 16
 
-#define TRIGGER_SPEED_KPH 5 /* km/h */
-#define TRIGGER_SPEED (1000 / 36) * TRIGGER_SPEED_KPH /* cm/s */
 
-#define MAX_SPEED_KPH 60 /* km/h */
-#define MAX_SPEED (1000 / 36) * MAX_SPEED_KPH /* cm/s */
-
-#define MAX_PERIOD 1000000
-#define MIN_PERIOD 100000
-
-#define FREQUENCY_NUMERATOR (1<<28)
 
 #define MAX_DIST = 175 /* cm */
 
@@ -62,8 +52,6 @@ bool     notificationSignal = 0;
 uint16_t lidarSampleCount  = 0;
 
 Timer    timer;
-uint32_t rotationPeriod    = 0; // time it takes for the lidar sensor to make one rotation
-uint32_t rotationFrequency = 0; // fixed point rotation frequency, FREQUENCY_NUMERATOR / rotationPeriod
 
 bool atSpeed = 0;
 

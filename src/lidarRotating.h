@@ -32,7 +32,7 @@
 #define MAX_PERIOD 1000000
 #define MIN_PERIOD 100000
 
-#define LIDAR_FREQUENCY_NUMERATOR_BITS 28
+#define LIDAR_FREQUENCY_NUMERATOR_BITS 20
 #define LIDAR_FREQUENCY_NUMERATOR (1 << LIDAR_FREQUENCY_NUMERATOR_BITS)
 
 #define LIDAR_SCAN_TIME_FUDGE_MS 5 // fundge factor before and after scanning is supposed to begin
@@ -69,6 +69,7 @@ private:
 
     uint16_t distanceBufferNow[LIDAR_STRIPS];
     uint16_t distanceBufferPrev[LIDAR_STRIPS];
+    int16_t  velocityBuffer[LIDAR_STRIPS];
 
     void rotationInterrupt();
 

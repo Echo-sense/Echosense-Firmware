@@ -26,6 +26,11 @@ lidarRotating::lidarRotating(I2C *i2c, DigitalOut *motor, InterruptIn *rotationS
 
     lidarTimer = new Timer();
     lidar      = new LIDARLite_v3HP(i2c);
+
+    for (uint16_t i = 0; i < LIDAR_STRIPS; i++) {
+        distanceBufferNow[i]  = UINT16_MAX;
+        distanceBufferPrev[i] = UINT16_MAX;
+    }
 }
 
 void lidarRotating::start() {
@@ -51,8 +56,8 @@ void lidarRotating::rotationInterrupt() {
     if (rotationPeriod >= MAX_PERIOD || rotationPeriod <= MIN_PERIOD) {
         return;
     }
-    uint32_t scanStartTime_us = ((rotationPeriod) * (1 << 8 - LIDAR_ANGLE_RANGE)) >> 9;
-    uint32_t scanStopTime_us  = ((rotationPeriod) * (1 << 8 + LIDAR_ANGLE_RANGE)) >> 9;
+    uint32_t scanStartTime_us = ((rotationPeriod) * ((1 << 8) - LIDAR_ANGLE_RANGE)) >> 9;
+    uint32_t scanStopTime_us  = ((rotationPeriod) * ((1 << 8) + LIDAR_ANGLE_RANGE)) >> 9;
 
     scanStartTime_ms = scanStartTime_us / 1000;
     scanStopTime_ms  = scanStopTime_us / 1000;
@@ -62,16 +67,31 @@ void lidarRotating::rotationInterrupt() {
 }
 
 void lidarRotating::scanStart() {
-    for (uint16_t i; i < LIDAR_STRIPS; i++) {
-        distanceBufferNow[i]  = UINT16_MAX;
-        distanceBufferPrev[i] = UINT16_MAX;
-    }
+    lidar->takeRange();
 
     scanJobID = eventQueue->call_every(SAMPLE_RATE, callback(this, &lidarRotating::takeReading));
 }
 
 void lidarRotating::scanStop() {
     eventQueue->cancel(scanJobID);
+
+    for (uint16_t i = 0; i < LIDAR_STRIPS; i++) {
+        uint16_t distanceNow  = distanceBufferNow[i];
+        uint16_t distancePrev = distanceBufferPrev[i];
+        int32_t velocity = ((distanceNow - distancePrev) * rotationFrequency) >> LIDAR_FREQUENCY_NUMERATOR_BITS;
+        if (velocity > MAX_SPEED) {
+            distanceBufferPrev[i] = distanceNow;
+            continue;
+        }
+        distancePrev = (distanceNow + distancePrev) * 2;
+        velocity = ((distanceNow = distancePrev)  * rotationFrequency) >> LIDAR_FREQUENCY_NUMERATOR_BITS;
+
+        distanceBufferPrev[i] = distancePrev;
+    }
+
+    for (uint16_t i = 0; i < LIDAR_STRIPS; i++) {
+        distanceBufferNow[i] = UINT16_MAX;
+    }
 }
 
 void lidarRotating::takeReading() {

@@ -69,15 +69,10 @@ void sendNotification() {
 }
 //std::function<void()> sN = &sendNotification; 
 
-lidarRotating rotateEchoSense(&i2c, &motor, &rotation, callback(&sendNotification));
+lidarRotating rotateEchoSense(&i2c, &motor, &rotation, &eventQueue, callback(&sendNotification));
 
 int main() {
     pc.baud(115200);
-
-    // setup LIDAR
-    lidar.configure(1, 1);
-    lidar.resetReferenceFilter();
-    //lidarRotating rotateEchoSense = lidarRotating(i2c, motor, rotation, sendNotification());
 
     // setup BLE
     BLE &ble = BLE::Instance();

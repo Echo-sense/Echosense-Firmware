@@ -19,6 +19,7 @@
 
 #include <mbed.h>
 #include <LIDARLite_v3HP.h>
+#include "trig.h"
 
 #define TRIGGER_SPEED_KPH 5 /* km/h */
 #define TRIGGER_SPEED (1000 / 36) * TRIGGER_SPEED_KPH /* cm/s */
@@ -26,38 +27,60 @@
 #define MAX_SPEED_KPH 60 /* km/h */
 #define MAX_SPEED (1000 / 36) * MAX_SPEED_KPH /* cm/s */
 
+#define SAMPLE_RATE 2 //ms
+
 #define MAX_PERIOD 1000000
 #define MIN_PERIOD 100000
 
-#define FREQUENCY_NUMERATOR (1<<28)
+#define LIDAR_FREQUENCY_NUMERATOR_BITS 28
+#define LIDAR_FREQUENCY_NUMERATOR (1 << LIDAR_FREQUENCY_NUMERATOR_BITS)
 
+#define LIDAR_SCAN_TIME_FUDGE_MS 5 // fundge factor before and after scanning is supposed to begin
+#define LIDAR_ANGLE_RANGE 64 // angle to scan. out of 255. 64 = 90°
 #define LIDAR_STRIPS 25 // number of strips to do detection calculations on
 #define LIDAR_DETECTION_WIDTH 500 // width of detection area in cm
 
-extern EventQueue eventQueue;
-
 class lidarRotating {
 public:
-    lidarRotating(I2C *i2c, DigitalOut *motor, InterruptIn *rotationSensor, Callback<void()> notifyCallback);
+
+    lidarRotating(I2C *i2c, DigitalOut *motor, InterruptIn *rotationSensor, EventQueue *eventQueue, const Callback<void()> notifyCallback);
+
 
     void start();
 
 private:
-    LIDARLite_v3HP *lidar;
-    Timer *lidarTimer;
-
-    I2C *i2c;
-    DigitalOut *motor;
+    //IO
+    I2C         *i2c;
+    DigitalOut  *motor;
     InterruptIn *rotationSensor;
-    Callback<void()> *notifyCallback;
+
+
+    const Callback<void()> *notifyCallback;
+    EventQueue             *eventQueue;
+
+    LIDARLite_v3HP *lidar;
+    Timer          *lidarTimer;
+
 
     uint32_t rotationPeriod    = 0; // time it takes for the lidar sensor to make one rotation
     uint32_t rotationFrequency = 0; // fixed point rotation frequency, FREQUENCY_NUMERATOR / rotationPeriod
 
+    uint32_t scanStartTime_ms = 0;
+    uint32_t scanStopTime_ms  = 0;
+
+    int scanJobID = 0;
+
     uint16_t distanceBufferNow[LIDAR_STRIPS];
     uint16_t distanceBufferPrev[LIDAR_STRIPS];
 
+    void rotationInterrupt();
+
+    void scanStart();
+
+    void scanStop();
+
     void takeReading();
+
     void printRotationTime();
 };
 

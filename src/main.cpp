@@ -86,6 +86,7 @@ int main() {
     pc.printf("starting event loop\r\n");
     //eventQueue.call_every(SAMPLE_RATE, &tick);
     // eventQueue.call_every(1000, &test);
+    rotateEchoSense.start();
     timer.start();
     eventQueue.dispatch_forever();
 }

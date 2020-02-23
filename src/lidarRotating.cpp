@@ -85,14 +85,17 @@ void lidarRotating::scanStop() {
             continue;
         }
         distancePrev = (distanceNow + distancePrev) * 2;
-        velocity = ((distanceNow = distancePrev)  * rotationFrequency) >> LIDAR_FREQUENCY_NUMERATOR_BITS;
-
+        velocity = ((distanceNow - distancePrev)  * rotationFrequency) >> LIDAR_FREQUENCY_NUMERATOR_BITS;
+        if(velocity > TRIGGER_SPEED) {
+            eventQueue->call(*this->notifyCallback);
+        }
         distanceBufferPrev[i] = distancePrev;
     }
 
     for (uint16_t i = 0; i < LIDAR_STRIPS; i++) {
         distanceBufferNow[i] = UINT16_MAX;
     }
+    
 }
 
 void lidarRotating::takeReading() {

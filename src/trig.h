@@ -19,7 +19,10 @@
 
 #include "trig.h"
 
-extern const std::array<uint16_t, 64> cosineLUT;
+#define TRIG_LUT_SIZE 64
+#define TRIG_LUT_MAGNITUDE 1024
+
+extern const std::array<uint16_t, TRIG_LUT_SIZE + 1> cosineLUT;
 
 int16_t lut_cos(uint16_t theta);
 int16_t lut_sin(uint16_t theta);

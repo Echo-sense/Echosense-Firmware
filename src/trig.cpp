@@ -17,62 +17,63 @@
 #include <cmath>
 #include <mbed.h>
 #include "trig.h"
+
 using namespace std;
 
 template<typename T>
-constexpr T look_up_table_elem (int i) {
+constexpr T look_up_table_elem(int i) {
     return {};
 }
 
 template<>
-constexpr uint16_t look_up_table_elem (int i) {
-    return round (cos (static_cast <long double>(i) / 32 * 3.14159 / 4) * 1024);
+constexpr uint16_t look_up_table_elem(int i) {
+    return round(cos(static_cast <long double>(i) / TRIG_LUT_SIZE * 3.14159 / 2) * TRIG_LUT_MAGNITUDE);
 }
 
 template<typename T, int... N>
-struct lookup_table_expand{};
+struct lookup_table_expand {};
 
 template<typename T, int... N>
 struct lookup_table_expand<T, 1, N...> {
-    static constexpr std::array<T, sizeof...(N) + 1> values = {{ look_up_table_elem<T>(0), N... }};
+    static constexpr std::array<T, sizeof...(N) + 1> values = {{look_up_table_elem<T>(0), N...}};
 };
 
 template<typename T, int L, int... N>
-struct lookup_table_expand<T, L, N...>: lookup_table_expand<T, L-1, look_up_table_elem<T>(L-1), N...> {};
+struct lookup_table_expand<T, L, N...> : lookup_table_expand<T, L - 1, look_up_table_elem<T>(L - 1), N...> {};
 
 template<typename T, int... N>
 constexpr std::array<T, sizeof...(N) + 1> lookup_table_expand<T, 1, N...>::values;
 
-const std::array<uint16_t, 64> cosineLUT = lookup_table_expand<uint16_t, 64>::values;
+const std::array<uint16_t, TRIG_LUT_SIZE + 1> cosineLUT = lookup_table_expand<uint16_t, TRIG_LUT_SIZE + 1>::values;
 
 int16_t lut_cos(uint16_t theta) {
-    while (theta >= 256) {
-        theta -= 256; // 0 to 255
+    while (theta >= TRIG_LUT_SIZE * 4) {
+        theta -= TRIG_LUT_SIZE * 4; // 0 to 255
     }
     int16_t sign = 1;
-    if (theta >= 128) {
-        theta = 255 - theta; // 0 to 127
+    if (theta >= TRIG_LUT_SIZE * 2) {
+        theta = TRIG_LUT_SIZE * 4 - theta; // 128 to 1
     }
-    if (theta >= 64) {
-        theta = 127 - theta; // 0 to 63
-        sign = -1;
+    if (theta >= TRIG_LUT_SIZE) {
+        theta = TRIG_LUT_SIZE * 2 - theta; // 64 to 1
+        sign  = -1;
     }
 
     return cosineLUT[theta] * sign;
 }
 
 int16_t lut_sin(uint16_t theta) {
-    while (theta >= 256) {
-        theta -= 256; // 0 to 255
+    while (theta >= TRIG_LUT_SIZE * 4) {
+        theta -= TRIG_LUT_SIZE * 4; // 0 to 255
     }
     int16_t sign = 1;
-    if (theta >= 128) {
-        theta = 255 - theta; // 0 to 127
-        sign = -1;
+    if (theta >= TRIG_LUT_SIZE * 2) {
+        theta = TRIG_LUT_SIZE * 4 - theta; // 128 to 1
+        sign  = -1;
     }
-    if (theta >= 64) {
-        theta = 127 - theta; // 0 to 63
+    if (theta >= TRIG_LUT_SIZE) {
+        theta = TRIG_LUT_SIZE * 2 - theta; // 64 to 1
     }
 
-    return cosineLUT[63 - theta] * sign;
+    return cosineLUT[TRIG_LUT_SIZE - theta] * sign;
 }

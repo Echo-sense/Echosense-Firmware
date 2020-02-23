@@ -16,11 +16,11 @@
 
 #include "lidarRotating.h"
 
-lidarRotating::lidarRotating(I2C *i2c, DigitalOut *motor, InterruptIn *rotationSensor, const Callback<void()> *notifyCallback) {
+lidarRotating::lidarRotating(I2C *i2c, DigitalOut *motor, InterruptIn *rotationSensor, Callback<void()> notifyCallback) {
     this->i2c            = i2c;
     this->motor          = motor;
     this->rotationSensor = rotationSensor;
-    this->notifyCallback = notifyCallback;
+    this->notifyCallback = &notifyCallback;
 
     lidarTimer = new Timer();
     lidar      = new LIDARLite_v3HP(i2c);
@@ -28,4 +28,12 @@ lidarRotating::lidarRotating(I2C *i2c, DigitalOut *motor, InterruptIn *rotationS
 
 void lidarRotating::start() {
     motor->write(1); // start motor
+}
+
+void lidarRotating::takeReading() {
+
+}
+
+void lidarRotating::printRotationTime() {
+    
 }

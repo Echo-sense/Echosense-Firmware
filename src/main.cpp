@@ -18,7 +18,9 @@
 #include "pins.h"
 #include "bleSetup.h"
 #include "trig.h"
+#include "lidarRotating.h"
 #include <LIDARLite_v3HP.h>
+//#include <Callback>
 
 //using namespace std;
 
@@ -35,9 +37,12 @@ DigitalOut led3(LED3);
 DigitalOut  motor(A3);
 InterruptIn rotation(A2);
 
+
 //Peripherals
 LIDARLite_v3HP lidar(&i2c);
 InterruptIn    lidarInterrupt(D9);
+
+
 
 EventQueue eventQueue(32 * EVENTS_EVENT_SIZE);
 Ticker     ticker;
@@ -62,6 +67,9 @@ void sendNotification() {
     notifyService->sendNotification(1);
     eventQueue.call_in(3000, &resetNotification);
 }
+//std::function<void()> sN = &sendNotification; 
+
+lidarRotating rotateEchoSense(&i2c, &motor, &rotation, callback(&sendNotification));
 
 int main() {
     pc.baud(115200);
@@ -69,6 +77,7 @@ int main() {
     // setup LIDAR
     lidar.configure(1, 1);
     lidar.resetReferenceFilter();
+    //lidarRotating rotateEchoSense = lidarRotating(i2c, motor, rotation, sendNotification());
 
     // setup BLE
     BLE &ble = BLE::Instance();

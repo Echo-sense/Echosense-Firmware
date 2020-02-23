@@ -38,7 +38,7 @@ extern EventQueue eventQueue;
 
 class lidarRotating {
 public:
-    lidarRotating(I2C *i2c, DigitalOut *motor, InterruptIn *rotationSensor, const Callback<void()> *notifyCallback);
+    lidarRotating(I2C *i2c, DigitalOut *motor, InterruptIn *rotationSensor, Callback<void()> notifyCallback);
 
     void start();
 
@@ -49,7 +49,7 @@ private:
     I2C *i2c;
     DigitalOut *motor;
     InterruptIn *rotationSensor;
-    const Callback<void()> *notifyCallback;
+    Callback<void()> *notifyCallback;
 
     uint32_t rotationPeriod    = 0; // time it takes for the lidar sensor to make one rotation
     uint32_t rotationFrequency = 0; // fixed point rotation frequency, FREQUENCY_NUMERATOR / rotationPeriod

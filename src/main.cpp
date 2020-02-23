@@ -23,9 +23,6 @@
 //using namespace std;
 
 #define EVENT_QUEUE_DEPTH 16
-
-
-
 #define MAX_DIST = 175 /* cm */
 
 //IO
@@ -45,13 +42,9 @@ InterruptIn    lidarInterrupt(D9);
 EventQueue eventQueue(32 * EVENTS_EVENT_SIZE);
 Ticker     ticker;
 
-uint16_t inverseDeltaTime   = 1000 / SAMPLE_RATE;
-uint16_t dist               = 0;
-bool     notificationSignal = 0;
+uint16_t lidarSampleCount = 0;
 
-uint16_t lidarSampleCount  = 0;
-
-Timer    timer;
+Timer timer;
 
 bool atSpeed = 0;
 
@@ -70,71 +63,12 @@ void sendNotification() {
     eventQueue.call_in(3000, &resetNotification);
 }
 
-void tick() {
-    if (lidar.getBusyFlag() == 1) {
-        led1 = 0;
-        return;
-    }
-    led1 = 1;
-
-    uint16_t oldDist = dist;
-    uint16_t newDist = lidar.readDistance();
-
-    int16_t velocity_check = ((oldDist - newDist)) * inverseDeltaTime;
-    if (velocity_check > MAX_SPEED) {
-        dist    = newDist;
-        oldDist = newDist;
-    } else {
-        dist = (dist + newDist) / 2;
-    }
-
-    int16_t velocity = ((oldDist - dist)) * inverseDeltaTime;
-    //led1 = (dist < 10) ? 0 : 1;
-    //pc.printf("[Porty-A]%d[END]\r\n", dist);
-    //pc.printf("[Porty-B]%d[END]\r\n", newDist);
-    //pc.printf("[Porty-C]%d[END]\r\n", velocity);
-
-    if (velocity > TRIGGER_SPEED) {
-        sendNotification();
-    }
-
-    lidar.takeRange();
-}
-
-void printRotationTime() {
-    pc.printf("total rotation time is %d\r\n", rotationPeriod);
-}
-
-void rotationInterrupt() {
-    rotationPeriod = timer.read_us();
-    atSpeed        = ((rotationPeriod > MIN_PERIOD) || (rotationPeriod < MAX_PERIOD));
-
-    if (atSpeed) {
-        rotationFrequency = FREQUENCY_NUMERATOR / rotationPeriod;
-    }
-
-    timer.reset();
-    eventQueue.call(&printRotationTime);
-}
-
 int main() {
-    led1 = 1;
     pc.baud(115200);
-
-    // setup rotation
-    pc.printf("starting motor\r\n");
-    rotation.fall(&rotationInterrupt); // setup rotation sensor interrupt
-    motor = 1; // turn on motor
 
     // setup LIDAR
     lidar.configure(1, 1);
     lidar.resetReferenceFilter();
-
-    /*
-    for (uint16_t x = 0; x < 256; x++) {
-        pc.printf("[Porty-A]%d[END]\r\n", lut_cos(x));
-    }*/
-    //print_memory_info();
 
     // setup BLE
     BLE &ble = BLE::Instance();

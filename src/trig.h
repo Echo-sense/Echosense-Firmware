@@ -19,12 +19,15 @@
 
 #include "trig.h"
 
-#define TRIG_LUT_SIZE 64
-#define TRIG_LUT_MAGNITUDE 1024
+#define TRIG_LUT_SIZE_BITS 6
+#define TRIG_LUT_SIZE 1 << TRIG_LUT_SIZE_BITS
+#define TRIG_LUT_MAGNITUDE_BITS 10
+#define TRIG_LUT_MAGNITUDE 1 << TRIG_LUT_MAGNITUDE_BITS
 
 extern const std::array<uint16_t, TRIG_LUT_SIZE + 1> cosineLUT;
 
 int16_t lut_cos(uint16_t theta);
+
 int16_t lut_sin(uint16_t theta);
 
 #endif //ECHOSENSE_FIRMWARE_TRIG_H

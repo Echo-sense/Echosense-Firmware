@@ -37,8 +37,9 @@
 
 #define LIDAR_SCAN_TIME_FUDGE_MS 5 // fundge factor before and after scanning is supposed to begin
 #define LIDAR_ANGLE_RANGE 64 // angle to scan. out of 255. 64 = 90°
-#define LIDAR_STRIPS 25 // number of strips to do detection calculations on
-#define LIDAR_DETECTION_WIDTH 500 // width of detection area in cm
+#define LIDAR_STRIPS 32 // number of strips to do detection calculations on
+#define LIDAR_SCAN_WIDTH 500 // width of detection area in cm
+#define LIDAR_SCAN_DEPTH 5000 // depth of detection area in cm
 
 class lidarRotating {
 public:

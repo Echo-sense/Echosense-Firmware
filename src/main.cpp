@@ -66,10 +66,6 @@ void sendNotification() {
 int main() {
     pc.baud(115200);
 
-    // setup LIDAR
-    lidar.configure(1, 1);
-    lidar.resetReferenceFilter();
-
     // setup BLE
     BLE &ble = BLE::Instance();
 

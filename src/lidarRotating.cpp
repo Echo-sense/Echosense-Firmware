@@ -16,13 +16,15 @@
 
 #include "lidarRotating.h"
 
+extern DigitalOut led1;
 
-lidarRotating::lidarRotating(I2C *i2c, DigitalOut *motor, InterruptIn *rotationSensor, EventQueue *eventQueue, const Callback<void()> notifyCallback) {
+lidarRotating::lidarRotating(I2C *i2c, DigitalOut *motor, InterruptIn *rotationSensor, EventQueue *eventQueue, Callback<
+    void()> notifyCallback) {
     this->i2c            = i2c;
     this->motor          = motor;
     this->rotationSensor = rotationSensor;
     this->eventQueue     = eventQueue;
-    this->notifyCallback = &notifyCallback;
+    this->notifyCallback = notifyCallback;
 
 
     lidarTimer = new Timer();
@@ -57,6 +59,8 @@ void lidarRotating::rotationInterrupt() {
     if (rotationPeriod >= MAX_PERIOD || rotationPeriod <= MIN_PERIOD) {
         return;
     }
+
+    eventQueue->call(callback(this, &lidarRotating::printRotationTime));
     uint32_t scanStartTime_us = ((rotationPeriod) * ((1 << 8) - LIDAR_ANGLE_RANGE)) >> 9;
     uint32_t scanStopTime_us  = ((rotationPeriod) * ((1 << 8) + LIDAR_ANGLE_RANGE)) >> 9;
 
@@ -68,34 +72,45 @@ void lidarRotating::rotationInterrupt() {
 }
 
 void lidarRotating::scanStart() {
+    led1 = 1;
     lidar->takeRange();
 
     scanJobID = eventQueue->call_every(SAMPLE_RATE, callback(this, &lidarRotating::takeReading));
 }
 
 void lidarRotating::scanStop() {
+    led1 = 0;
     eventQueue->cancel(scanJobID);
 
+    printf("Frame Start\r\n");
     for (uint16_t i = 0; i < LIDAR_STRIPS; i++) {
         uint16_t distanceNow  = distanceBufferNow[i];
         uint16_t distancePrev = distanceBufferPrev[i];
-        int32_t velocity = ((distanceNow - distancePrev) * rotationFrequency) >> LIDAR_FREQUENCY_NUMERATOR_BITS;
-        if (velocity > MAX_SPEED) {
+        int32_t  velocity     = ((int32_t) distancePrev - (int32_t) distanceNow) * 1000000 / (int32_t) rotationPeriod;
+        distanceBufferNow[i] = UINT16_MAX;
+
+        if (velocity > MAX_SPEED || distancePrev == UINT32_MAX) {
             distanceBufferPrev[i] = distanceNow;
             continue;
         }
-        distancePrev = (distanceNow + distancePrev) * 2;
-        velocity = ((distanceNow - distancePrev)  * rotationFrequency) >> LIDAR_FREQUENCY_NUMERATOR_BITS;
-        if(velocity > TRIGGER_SPEED) {
-            eventQueue->call(*this->notifyCallback);
-        }
-        distanceBufferPrev[i] = distancePrev;
-    }
 
-    for (uint16_t i = 0; i < LIDAR_STRIPS; i++) {
-        distanceBufferNow[i] = UINT16_MAX;
+        distanceBufferPrev[i] = (distanceNow + distancePrev) / 2;
+
+        if (velocity > TRIGGER_SPEED && velocity < MAX_SPEED) {
+            eventQueue->call(notifyCallback);
+        }
+
+//        printf("[Porty-A]%d[END]\r\n", distanceNow);
+//        printf("[Porty-B]%d[END]\r\n", distancePrev);
+//        printf("[Porty-C]%d[END]\r\n", velocity);
     }
-    
+}
+
+void printData(uint32_t a, int32_t b, int32_t c, int32_t d) {
+    printf("[Porty-A]%d[END]\r\n", a);
+    printf("[Porty-B]%d[END]\r\n", b);
+    printf("[Porty-C]%d[END]\r\n", c);
+    printf("[Porty-D]%d[END]\r\n", d);
 }
 
 void lidarRotating::takeReading() {
@@ -103,9 +118,9 @@ void lidarRotating::takeReading() {
         return;
     }
     lidar->takeRange();
-    uint32_t distance = lidar->readDistance();
+    int32_t  distance = lidar->readDistance();
     uint32_t time_us  = lidarTimer->read_us();
-    uint32_t theta    = (time_us * rotationFrequency) >> (LIDAR_FREQUENCY_NUMERATOR_BITS - TRIG_LUT_SIZE_BITS);
+    uint32_t theta    = (time_us * rotationFrequency) >> (LIDAR_FREQUENCY_NUMERATOR_BITS - (TRIG_LUT_SIZE_BITS + 2));
 
     // rotate reference frame 180°, so that 0° point is in the middle of the scanning range
     theta += (TRIG_LUT_SIZE * 2);
@@ -113,12 +128,16 @@ void lidarRotating::takeReading() {
         theta -= TRIG_LUT_SIZE * 4; // 0 to 255
     }
 
+    if (distance < LIDAR_SCAN_MINIMUM) {
+        distance = LIDAR_SCAN_MINIMUM;
+    }
+
     // calculate X and Y coordinates of the LIDAR hit
     int32_t distX = (lut_sin(theta) * distance) >> TRIG_LUT_MAGNITUDE_BITS;
     int32_t distY = (lut_cos(theta) * distance) >> TRIG_LUT_MAGNITUDE_BITS;
 
 
-    distX += (LIDAR_SCAN_WIDTH >> 1);
+    distX += (int32_t) (LIDAR_SCAN_WIDTH / 2);
 
     if (distY > LIDAR_SCAN_DEPTH || distX > LIDAR_SCAN_WIDTH || distX < 0) {
         // lidar hit is outside the detection area, so we can ignore it
@@ -126,14 +145,25 @@ void lidarRotating::takeReading() {
     }
 
     // calculate which "strip" we are looking at
-    uint16_t strip = distX / LIDAR_STRIPS;
+    uint16_t strip = (distX * LIDAR_STRIPS) / LIDAR_SCAN_WIDTH;
+
+    eventQueue->call(&printData, theta, strip, distX, distY);
+
     if (strip >= LIDAR_STRIPS) {
         return;
     }
+
 
     // store distance into that strip if less than what is stored
     if (distY < distanceBufferNow[strip]) {
         distanceBufferNow[strip] = distY;
     }
+}
+
+void lidarRotating::printRotationTime() {
+    printf("rotation time: %d\r\n", rotationPeriod);
+    printf("rotation frequency: %d\r\n", rotationFrequency);
+    printf("start time: %d ms\r\n", scanStartTime_ms);
+    printf("stop time: %d ms\r\n", scanStopTime_ms);
 }
 

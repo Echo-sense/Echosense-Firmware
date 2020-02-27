@@ -37,22 +37,6 @@ DigitalOut led3(LED3);
 DigitalOut  motor(A3);
 InterruptIn rotation(A2);
 
-
-//Peripherals
-LIDARLite_v3HP lidar(&i2c);
-InterruptIn    lidarInterrupt(D9);
-
-
-
-EventQueue eventQueue(32 * EVENTS_EVENT_SIZE);
-Ticker     ticker;
-
-uint16_t lidarSampleCount = 0;
-
-Timer timer;
-
-bool atSpeed = 0;
-
 void resetNotification() {
     notifyService->sendNotification(0);
     led2 = 0;
@@ -67,9 +51,19 @@ void sendNotification() {
     notifyService->sendNotification(1);
     eventQueue.call_in(3000, &resetNotification);
 }
-//std::function<void()> sN = &sendNotification; 
 
-lidarRotating rotateEchoSense(&i2c, &motor, &rotation, &eventQueue, callback(&sendNotification));
+//Peripherals
+lidarRotating lidar(&i2c, &motor, &rotation, &eventQueue, callback(&sendNotification));
+InterruptIn   lidarInterrupt(D9);
+
+EventQueue eventQueue(32 * EVENTS_EVENT_SIZE);
+Ticker     ticker;
+
+uint16_t lidarSampleCount = 0;
+
+Timer timer;
+
+bool atSpeed = 0;
 
 int main() {
     pc.baud(115200);
@@ -86,8 +80,7 @@ int main() {
     pc.printf("starting event loop\r\n");
     //eventQueue.call_every(SAMPLE_RATE, &tick);
     // eventQueue.call_every(1000, &test);
-    rotateEchoSense.start();
-    timer.start();
+    lidar.start();
     eventQueue.dispatch_forever();
 }
 

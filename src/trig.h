@@ -20,9 +20,9 @@
 #include "trig.h"
 
 #define TRIG_LUT_SIZE_BITS 6
-#define TRIG_LUT_SIZE 1 << TRIG_LUT_SIZE_BITS
+#define TRIG_LUT_SIZE (1 << TRIG_LUT_SIZE_BITS)
 #define TRIG_LUT_MAGNITUDE_BITS 10
-#define TRIG_LUT_MAGNITUDE 1 << TRIG_LUT_MAGNITUDE_BITS
+#define TRIG_LUT_MAGNITUDE (1 << TRIG_LUT_MAGNITUDE_BITS)
 
 extern const std::array<uint16_t, TRIG_LUT_SIZE + 1> cosineLUT;
 

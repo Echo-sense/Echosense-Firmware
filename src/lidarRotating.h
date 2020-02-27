@@ -24,7 +24,7 @@
 #define TRIGGER_SPEED_KPH 5 /* km/h */
 #define TRIGGER_SPEED (1000 / 36) * TRIGGER_SPEED_KPH /* cm/s */
 
-#define MAX_SPEED_KPH 60 /* km/h */
+#define MAX_SPEED_KPH 30 /* km/h */
 #define MAX_SPEED (1000 / 36) * MAX_SPEED_KPH /* cm/s */
 
 #define SAMPLE_RATE 2 //ms
@@ -32,20 +32,20 @@
 #define MAX_PERIOD 1000000
 #define MIN_PERIOD 100000
 
-#define LIDAR_FREQUENCY_NUMERATOR_BITS 20
+#define LIDAR_FREQUENCY_NUMERATOR_BITS 26
 #define LIDAR_FREQUENCY_NUMERATOR (1 << LIDAR_FREQUENCY_NUMERATOR_BITS)
 
 #define LIDAR_SCAN_TIME_FUDGE_MS 5 // fundge factor before and after scanning is supposed to begin
-#define LIDAR_ANGLE_RANGE 64 // angle to scan. out of 255. 64 = 90°
-#define LIDAR_STRIPS 32 // number of strips to do detection calculations on
-#define LIDAR_SCAN_WIDTH 500 // width of detection area in cm
-#define LIDAR_SCAN_DEPTH 5000 // depth of detection area in cm
+#define LIDAR_ANGLE_RANGE 100 // angle to scan. out of 255. 64 = 90°
+#define LIDAR_STRIPS 16 // number of strips to do detection calculations on
+#define LIDAR_SCAN_WIDTH 512 // width of detection area in cm
+#define LIDAR_SCAN_DEPTH 500 // depth of detection area in cm
+#define LIDAR_SCAN_MINIMUM 10 // near side of the detection area in cm, used to prevent singularities
 
 class lidarRotating {
 public:
 
-    lidarRotating(I2C *i2c, DigitalOut *motor, InterruptIn *rotationSensor, EventQueue *eventQueue, const Callback<void()> notifyCallback);
-
+    lidarRotating(I2C *i2c, DigitalOut *motor, InterruptIn *rotationSensor, EventQueue *eventQueue, Callback<void()> notifyCallback);
 
     void start();
 
@@ -55,13 +55,11 @@ private:
     DigitalOut  *motor;
     InterruptIn *rotationSensor;
 
-
-    const Callback<void()> *notifyCallback;
-    EventQueue             *eventQueue;
+    Callback<void()> notifyCallback;
+    EventQueue       *eventQueue;
 
     LIDARLite_v3HP *lidar;
     Timer          *lidarTimer;
-
 
     uint32_t rotationPeriod    = 0; // time it takes for the lidar sensor to make one rotation
     uint32_t rotationFrequency = 0; // fixed point rotation frequency, FREQUENCY_NUMERATOR / rotationPeriod
@@ -73,7 +71,6 @@ private:
 
     uint16_t distanceBufferNow[LIDAR_STRIPS];
     uint16_t distanceBufferPrev[LIDAR_STRIPS];
-    int16_t  velocityBuffer[LIDAR_STRIPS];
 
     void rotationInterrupt();
 

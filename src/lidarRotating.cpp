@@ -61,14 +61,14 @@ void lidarRotating::rotationInterrupt() {
     }
 
     eventQueue->call(callback(this, &lidarRotating::printRotationTime));
-    uint32_t scanStartTime_us = ((rotationPeriod) * ((1 << 8) - LIDAR_ANGLE_RANGE)) >> 9;
-    uint32_t scanStopTime_us  = ((rotationPeriod) * ((1 << 8) + LIDAR_ANGLE_RANGE)) >> 9;
+    scanStartTime_us = ((rotationPeriod) * ((1 << 8) - LIDAR_ANGLE_RANGE)) >> 9;
+    scanStopTime_us  = ((rotationPeriod) * ((1 << 8) + LIDAR_ANGLE_RANGE)) >> 9;
+//
+//    scanStartTime_ms = scanStartTime_us / 1000;
+//    scanStopTime_ms  = scanStopTime_us / 1000;
 
-    scanStartTime_ms = scanStartTime_us / 1000;
-    scanStopTime_ms  = scanStopTime_us / 1000;
-
-    eventQueue->call_in(scanStartTime_ms, callback(this, &lidarRotating::scanStart));
-    eventQueue->call_in(scanStopTime_ms, callback(this, &lidarRotating::scanStop));
+    eventQueue->call(callback(this, &lidarRotating::scanStop));
+    eventQueue->call(callback(this, &lidarRotating::scanStart));
 }
 
 void lidarRotating::scanStart() {
@@ -87,22 +87,16 @@ void lidarRotating::scanStop() {
         uint16_t distanceNow  = distanceBufferNow[i];
         uint16_t distancePrev = distanceBufferPrev[i];
         int32_t  velocity     = ((int32_t) distancePrev - (int32_t) distanceNow) * 1000000 / (int32_t) rotationPeriod;
-        distanceBufferNow[i] = UINT16_MAX;
-
-        if (velocity > MAX_SPEED || distancePrev == UINT32_MAX) {
-            distanceBufferPrev[i] = distanceNow;
-            continue;
-        }
-
-        distanceBufferPrev[i] = (distanceNow + distancePrev) / 2;
+        distanceBufferNow[i]  = UINT16_MAX;
+        distanceBufferPrev[i] = distanceNow;
 
         if (velocity > TRIGGER_SPEED && velocity < MAX_SPEED) {
             eventQueue->call(notifyCallback);
         }
 
-//        printf("[Porty-A]%d[END]\r\n", distanceNow);
-//        printf("[Porty-B]%d[END]\r\n", distancePrev);
-//        printf("[Porty-C]%d[END]\r\n", velocity);
+        printf("[Porty-A]%d[END]\r\n", distanceNow);
+        printf("[Porty-B]%d[END]\r\n", distancePrev);
+        printf("[Porty-C]%d[END]\r\n", velocity);
     }
 }
 
@@ -117,16 +111,22 @@ void lidarRotating::takeReading() {
     if (lidar->getBusyFlag() == 1) {
         return;
     }
+
     lidar->takeRange();
     int32_t  distance = lidar->readDistance();
     uint32_t time_us  = lidarTimer->read_us();
-    uint32_t theta    = (time_us * rotationFrequency) >> (LIDAR_FREQUENCY_NUMERATOR_BITS - (TRIG_LUT_SIZE_BITS + 2));
+    if (time_us < scanStartTime_us || time_us > scanStopTime_us) {
+        return;
+    }
+    uint32_t theta = (time_us * rotationFrequency) >> (LIDAR_FREQUENCY_NUMERATOR_BITS - (TRIG_LUT_SIZE_BITS + 2));
+
 
     // rotate reference frame 180°, so that 0° point is in the middle of the scanning range
     theta += (TRIG_LUT_SIZE * 2);
-    while (theta >= TRIG_LUT_SIZE * 4) {
-        theta -= TRIG_LUT_SIZE * 4; // 0 to 255
-    }
+//    while (theta >= TRIG_LUT_SIZE * 4) {
+//        theta -= TRIG_LUT_SIZE * 4; // 0 to 255
+//    }
+
 
     if (distance < LIDAR_SCAN_MINIMUM) {
         distance = LIDAR_SCAN_MINIMUM;
@@ -136,6 +136,7 @@ void lidarRotating::takeReading() {
     int32_t distX = (lut_sin(theta) * distance) >> TRIG_LUT_MAGNITUDE_BITS;
     int32_t distY = (lut_cos(theta) * distance) >> TRIG_LUT_MAGNITUDE_BITS;
 
+    //eventQueue->call(&printData, theta, time_us, distX, distance);
 
     distX += (int32_t) (LIDAR_SCAN_WIDTH / 2);
 
@@ -147,7 +148,6 @@ void lidarRotating::takeReading() {
     // calculate which "strip" we are looking at
     uint16_t strip = (distX * LIDAR_STRIPS) / LIDAR_SCAN_WIDTH;
 
-    eventQueue->call(&printData, theta, strip, distX, distY);
 
     if (strip >= LIDAR_STRIPS) {
         return;
@@ -163,7 +163,7 @@ void lidarRotating::takeReading() {
 void lidarRotating::printRotationTime() {
     printf("rotation time: %d\r\n", rotationPeriod);
     printf("rotation frequency: %d\r\n", rotationFrequency);
-    printf("start time: %d ms\r\n", scanStartTime_ms);
-    printf("stop time: %d ms\r\n", scanStopTime_ms);
+    printf("start time: %d µs\r\n", scanStartTime_us);
+    printf("stop time: %d µs\r\n", scanStopTime_us);
 }
 

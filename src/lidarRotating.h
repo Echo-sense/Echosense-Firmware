@@ -24,10 +24,10 @@
 #define TRIGGER_SPEED_KPH 5 /* km/h */
 #define TRIGGER_SPEED (1000 / 36) * TRIGGER_SPEED_KPH /* cm/s */
 
-#define MAX_SPEED_KPH 30 /* km/h */
+#define MAX_SPEED_KPH 60 /* km/h */
 #define MAX_SPEED (1000 / 36) * MAX_SPEED_KPH /* cm/s */
 
-#define SAMPLE_RATE 2 //ms
+#define SAMPLE_RATE 1 //ms
 
 #define MAX_PERIOD 1000000
 #define MIN_PERIOD 100000
@@ -63,6 +63,9 @@ private:
 
     uint32_t rotationPeriod    = 0; // time it takes for the lidar sensor to make one rotation
     uint32_t rotationFrequency = 0; // fixed point rotation frequency, FREQUENCY_NUMERATOR / rotationPeriod
+
+    uint32_t scanStartTime_us = 0;
+    uint32_t scanStopTime_us  = 0;
 
     uint32_t scanStartTime_ms = 0;
     uint32_t scanStopTime_ms  = 0;

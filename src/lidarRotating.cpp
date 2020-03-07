@@ -32,8 +32,12 @@ lidarRotating::lidarRotating(I2C *i2c, DigitalOut *motor, InterruptIn *rotationS
 
     for (uint16_t i = 0; i < LIDAR_STRIPS; i++) {
         distanceBufferNow[i]  = UINT16_MAX;
-        distanceBufferPrev[i] = UINT16_MAX;
     }
+	for (uint16_t i = 0; i < LIDAR_PAST; i++){
+		for (uint16_t j = 0; j < LIDAR_STRIPS; j++){
+			distanceBufferPrev[i][j] = UINT16_MAX;
+		}
+	}
 }
 
 void lidarRotating::start() {
@@ -84,11 +88,35 @@ void lidarRotating::scanStop() {
 
     printf("Frame Start\r\n");
     for (uint16_t i = 0; i < LIDAR_STRIPS; i++) {
-        uint16_t distanceNow  = distanceBufferNow[i];
-        uint16_t distancePrev = distanceBufferPrev[i];
-        int32_t  velocity     = ((int32_t) distancePrev - (int32_t) distanceNow) * 1000000 / (int32_t) rotationPeriod;
-        distanceBufferNow[i]  = UINT16_MAX;
-        distanceBufferPrev[i] = distanceNow;
+        uint16_t nElements = LIDAR_PAST + 1;
+		uint16_t distanceNow  = distanceBufferNow[i];
+        //uint16_t distancePrev = distanceBufferPrev[i];
+        //int32_t  velocity     = ((int32_t) distancePrev - (int32_t) distanceNow) * 1000000 / (int32_t) rotationPeriod;
+        uint16_t rotationTime = 1000000 / (int32_t) rotationPeriod;
+		uint16_t sumXY = 0;
+		uint16_t sumX = 0;
+		uint32_t sumY = 0;
+		uint32_t sumX2 = 0;
+		for (uint16_t x = 0; x < LIDAR_PAST; x++){
+			uint16_t distanceP = distanceBufferPrev[x][i];
+			sumXY += distanceP * rotationTime * x;
+			sumX += rotationTime * x;
+			sumY += distanceP;
+			sumX2 += rotationTime * rotationTime * x * x;
+		}
+		sumXY += distanceNow * rotationTime * LIDAR_PAST;
+		sumX += LIDAR_PAST;
+		sumY += distanceNow;
+		sumX2 += LIDAR_PAST * LIDAR_PAST;
+		
+		int32_t velocity = (nElements * sumXY - sumX * sumY) / (nElements * sumX2 - sumX * sumX);
+		
+		distanceBufferNow[i]  = UINT16_MAX;
+        //distanceBufferPrev[i] = distanceNow;
+		for (uint16_t x = 0 ; x < LIDAR_PAST - 1 ; x++){
+			distanceBufferPrev[x][i] = distanceBufferPrev[x+1][i];
+		}
+		distanceBufferPrev[LIDAR_PAST - 1][i] = distanceNow;
 
         if (velocity > TRIGGER_SPEED && velocity < MAX_SPEED) {
             eventQueue->call(notifyCallback);

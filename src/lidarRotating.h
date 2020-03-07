@@ -41,6 +41,8 @@
 #define LIDAR_SCAN_WIDTH 512 // width of detection area in cm
 #define LIDAR_SCAN_DEPTH 500 // depth of detection area in cm
 #define LIDAR_SCAN_MINIMUM 10 // near side of the detection area in cm, used to prevent singularities
+#define LIDAR_PAST 4 //number of past readings to remember for linear regression
+
 
 class lidarRotating {
 public:
@@ -73,7 +75,7 @@ private:
     int scanJobID = 0;
 
     uint16_t distanceBufferNow[LIDAR_STRIPS];
-    uint16_t distanceBufferPrev[LIDAR_STRIPS];
+    uint16_t distanceBufferPrev[LIDAR_PAST][LIDAR_STRIPS];
 
     void rotationInterrupt();
 
